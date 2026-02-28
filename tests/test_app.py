@@ -9,6 +9,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'api'))
 os.environ['MONGO_URI'] = 'mongodb://localhost:27017/test'
 os.environ['JWT_SECRET'] = 'test_secret_key'
 
+VALID_OID = '507f1f77bcf86cd799439011'
+
 with patch('pymongo.MongoClient'):
     import app
 
@@ -55,10 +57,16 @@ class TestLands:
         assert response.status_code == 200
 
     @patch('app.lands_collection')
+    def test_get_land_invalid_id(self, mock_lands, client):
+        response = client.get('/api/lands/123')
+        
+        assert response.status_code == 400
+
+    @patch('app.lands_collection')
     def test_get_land_not_found(self, mock_lands, client):
         mock_lands.find_one.return_value = None
         
-        response = client.get('/api/lands/123')
+        response = client.get(f'/api/lands/{VALID_OID}')
         
         assert response.status_code == 404
 
@@ -68,25 +76,43 @@ class TestPlots:
     def test_get_plots_empty(self, mock_plots, client):
         mock_plots.find.return_value = []
         
-        response = client.get('/api/lands/123/plots')
+        response = client.get(f'/api/lands/{VALID_OID}/plots')
         
         assert response.status_code == 200
+
+    @patch('app.plots_collection')
+    def test_get_plots_invalid_id(self, mock_plots, client):
+        response = client.get('/api/lands/123/plots')
+        
+        assert response.status_code == 400
+
+    @patch('app.plots_collection')
+    def test_get_plot_invalid_id(self, mock_plots, client):
+        response = client.get('/api/plots/123')
+        
+        assert response.status_code == 400
 
     @patch('app.plots_collection')
     def test_get_plot_not_found(self, mock_plots, client):
         mock_plots.find_one.return_value = None
         
-        response = client.get('/api/plots/123')
+        response = client.get(f'/api/plots/{VALID_OID}')
         
         assert response.status_code == 404
 
 
 class TestPlot3D:
     @patch('app.plot3d_collection')
+    def test_get_plot_3d_invalid_id(self, mock_plot3d, client):
+        response = client.get('/api/plots/123/3d')
+        
+        assert response.status_code == 400
+
+    @patch('app.plot3d_collection')
     def test_get_plot_3d_not_found(self, mock_plot3d, client):
         mock_plot3d.find_one.return_value = None
         
-        response = client.get('/api/plots/123/3d')
+        response = client.get(f'/api/plots/{VALID_OID}/3d')
         
         assert response.status_code == 404
 
